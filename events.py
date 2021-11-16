@@ -7,7 +7,7 @@ from builtins import bot, cursor, connection
 # creates a table for the joined guild in omnibus.db
 @bot.event
 async def on_guild_join(guild):
-    role = discord.utils.get(guild.roles, name='member')
+    role = discord.utils.get(guild.roles, name="member")
     if not role:
         await guild.system_channel.send('''Sorry, in order to use this bot you need to have a 
             member role in your server! You will also need to give
@@ -26,7 +26,7 @@ async def on_guild_join(guild):
         if not member.bot:
             stored_roles = []
             for role in member.roles:
-                if role.name != 'member' and role.name != '@everyone':
+                if role.name != "member" and role.name != "@everyone":
                     stored_roles.append(role.id)
 
             if stored_roles:
@@ -49,7 +49,7 @@ async def on_guild_remove(guild):
 @bot.event
 async def on_member_join(member):
     if not member.bot:
-        role = discord.utils.get(member.guild.roles, name='member')
+        role = discord.utils.get(member.guild.roles, name="member")
         await member.add_roles(role)
         
         cursor.execute(f'select * from "{str(member.guild.id)}" where member="{member.id}"')
@@ -59,7 +59,7 @@ async def on_member_join(member):
         if not stored_roles:
             cursor.execute(f'insert into "{str(member.guild.id)}" (member) values ("{member.id}")')
             sleep(1)
-            await member.guild.system_channel.send(f'Welcome <@{member.id}>, every user has admin, so go ahead and give yourself the roles you\'d like.')
+            await member.guild.system_channel.send(f"Welcome <@{member.id}>, every user has admin, so go ahead and give yourself the roles you'd like.")
 
         elif stored_roles[1]:
             # index 0 of stored_roles is the member id, index 1 is the list of roles
@@ -73,7 +73,7 @@ async def on_member_join(member):
                     cursor.execute(f'update "{str(member.guild.id)}" set rolelist="{str(stored_roles)}" where member="{member.id}"')
 
     else:
-        role = discord.utils.get(member.guild.roles, name='bots')
+        role = discord.utils.get(member.guild.roles, name="bots")
         await member.add_roles(role)
 
     connection.commit()
@@ -97,10 +97,10 @@ async def on_member_update(before, after):
             else:
                 stored_roles = []
 
-            if new_roles and new_roles[0].name != 'member':
+            if new_roles and new_roles[0].name != "member":
                 stored_roles.append(new_roles[0].id)
                 cursor.execute(f'update "{str(before.guild.id)}" set rolelist="{str(stored_roles)}" where member="{str(before.id)}"')
-            elif removed_roles and removed_roles[0].name != 'member':
+            elif removed_roles and removed_roles[0].name != "member":
                 stored_roles.remove(removed_roles[0].id)
                 cursor.execute(f'update "{str(before.guild.id)}" set rolelist="{str(stored_roles)}" where member="{str(before.id)}"')
                     
