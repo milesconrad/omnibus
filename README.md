@@ -3,4 +3,4 @@ A general purpose discord bot that keeps track of user's roles, makes captions f
 
 Along with the packages in `requirements.txt`, you will also need to make sure you have imagemagick installed on your machine. As it stands, the bot is using os.system() to process the images.
 
-This bot is programmed to be run on linux, so unfortunately I don't have any help for getting it running on windows.
+This bot is programmed to be run on linux, so unfortunately I don't have any suggestions for getting it running on windows.
