@@ -14,5 +14,5 @@ builtins.cursor = cursor
 import commands
 import events
 
-bot.run('ODI2OTk1ODEwODMwOTA5NDQw.YGUl3g.E21kdCxubWPzmRfHrcnQZRXP0pE')
+bot.run('bot token')
 connection.close()
