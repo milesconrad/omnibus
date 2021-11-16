@@ -1,0 +1,5 @@
+discord.py
+google_translate_py
+pycountry
+youtube_dl
+pynacl
