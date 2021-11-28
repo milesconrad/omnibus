@@ -287,7 +287,7 @@ async def to_ascii(ctx):
     for i in range(len(pixels_as_chars)):
         for j in range(len(pixels_as_chars[i])):
             output += str(pixels_as_chars[i][j])
-            output += " "
+            output += "  "
         output += "\n"
 
     # the output often breaks the discord message limit, so we instead upload it as a txt file
