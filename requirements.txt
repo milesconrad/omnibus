@@ -1,5 +1,6 @@
 discord.py
 google_translate_py
+pillow
 pycountry
-youtube_dl
 pynacl
+youtube_dl

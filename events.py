@@ -1,8 +1,8 @@
+from ast import literal_eval as str_to_list
+from builtins import bot, cursor, connection
 import discord
 from datetime import datetime
 from time import sleep
-from ast import literal_eval as str_to_list
-from builtins import bot, cursor, connection
 
 # creates a table for the joined guild in omnibus.db
 @bot.event

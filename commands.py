@@ -1,19 +1,20 @@
+# built-in modules
+from builtins import bot
+from image_object import ImageData
+from os import system as exec
+from requests import get
+from secrets import token_urlsafe as create_token
+from threading import Thread
+from time import sleep
+
+# installed modules
 import discord
 from discord import FFmpegPCMAudio
 from discord.errors import ClientException
 from google_translate_py import Translator
+from PIL import Image, UnidentifiedImageError
 from pycountry import languages
 from youtube_dl import YoutubeDL
-from threading import Thread
-from time import sleep
-from builtins import bot
-
-import youtube_dl
-
-from image_object import Image
-from os import system as exec
-from requests import get
-from secrets import token_urlsafe as create_token
 
 translator = Translator()
 voice_clients = dict()
@@ -71,35 +72,35 @@ async def caption(ctx, *, input):
         elif history[i].attachments:
             if history[i].attachments[0].content_type.find("image") != -1:
                 file = history[i].attachments[0]
-                file = Image(create_token(10) + ".gif", file.url, file.width, file.height)
+                file = ImageData(create_token(10) + ".gif", file.url, file.width, file.height)
         elif history[i].embeds:
             if history[i].embeds[0].type.find("image") != -1:
                 file = history[i].embeds[0]
-                file = Image(create_token(10) + ".gif", file.url, file.thumbnail.width, file.thumbnail.height)
+                file = ImageData(create_token(10) + ".gif", file.url, file.thumbnail.width, file.thumbnail.height)
         i += 1
 
   
     response = get(file.url, allow_redirects=True)
     open(f"image_processing/{file.name}", "wb").write(response.content)
   
-    # character"s height is 2 times larger than its width
+    # character's height is 2 times larger than its width
     # minimum font size is 1/10th of the original image height
     # max font size is 1/4th of the original image height
-    # text has 20 pixel padding all around
+    # text has 10 pixel padding all around
     font_size = 4
     output = ""
-    if len(input) * (file.height / 4) / 2 > file.width - 20:
-        while len(input) * (file.height / font_size) / 2 > file.width - 20:
+    if len(input) * ((file.height / font_size) / 2) > file.width - 20:
+        while len(input) * ((file.height / font_size) / 2) > file.width - 20:
             font_size += 1
 
         if font_size > 12:
             font_size = 12
-            # index 0 is the last break in words that breaks the line properly
-            # index 1 is the last character that can break the line properly
+            # index 0 of cursors is the last space that breaks the line properly
+            # index 1 of cursors is the last character that breaks the line properly
             cursors = [0, 0]
             line_start = 0
             for i in range(len(input)):
-                if (i - line_start) * (file.height / font_size) / 2 < file.width - 20:
+                if (i - line_start) * ((file.height / font_size) / 2) < file.width - 20:
                     if input[i] == " ":
                         cursors[0] = i
                     cursors[1] = i
@@ -123,7 +124,7 @@ async def caption(ctx, *, input):
         output = input
   
     line_count = output.count(chr(10)) + 1
-    caption_height = int(line_count * (file.height / font_size * 1.45)) + 10
+    caption_height = int(line_count * (file.height / font_size) + (file.height / font_size / 2) + font_size)
     exec(f'''convert image_processing/{file.name} \
             -gravity south \
             -background white \
@@ -219,4 +220,79 @@ async def stop(ctx):
     if matched:
         voice_clients[str(ctx.guild.id)].stop()
     else:
-        await ctx.send("If you would like the bot to stop playing, you will need to be in the same voice channel")
+        await ctx.send("If you would like the bot to stop playing, you will need to be in the same voice channel as the bot")
+
+@bot.command(name="to_ascii")
+async def to_ascii(ctx):
+    await ctx.channel.trigger_typing()
+    history = await ctx.channel.history(limit=5).flatten()
+
+    file = None
+    i = 1
+    while file == None:
+        if i >= len(history):
+            history = await ctx.channel.history(limit=len(history) + 5).flatten()
+
+        elif history[i].attachments:
+            if history[i].attachments[0].content_type.find("image") != -1:
+                file = history[i].attachments[0]
+                file = ImageData(create_token(10) + ".gif", file.url, file.width, file.height)
+        elif history[i].embeds:
+            if history[i].embeds[0].type.find("image") != -1:
+                file = history[i].embeds[0]
+                file = ImageData(create_token(10) + ".gif", file.url, file.thumbnail.width, file.thumbnail.height)
+        i += 1
+  
+    response = get(file.url, allow_redirects=True)
+    open(f"image_processing/{file.name}", "wb").write(response.content)
+
+    image = None
+    try:
+        image = Image.open(f"image_processing/{file.name}")
+    except UnidentifiedImageError:
+        await ctx.send("Sorry, the last image available is not valid, please try another")
+        return
+
+    if image.format == "GIF":
+        image = image.convert("RGB")
+    pixels = image.load()
+    width, height = image.size
+
+    # makes image grayscale
+    for i in range(height):
+        for j in range(width):
+            pixels[j, i] = int(round(sum(pixels[j, i]) / float(len(pixels[j, i]))))
+
+    # brightness_index helps us convert an RGB byte to a number 0-12, which we can convert to a corresponding character
+    # pixelate factor determines how many pixels we skip over when writing to the final string
+    pixels_as_chars = []
+    char_convert = [" ", ".", ",", "-", "~", ":", ";", "=", "!", "*", "#", "$", "@"]
+    brightness_index = 255 / (len(char_convert) - 1)
+    pixelate_factor = 0
+    if width >= height:
+        pixelate_factor = width / 75
+    elif width < height:
+        pixelate_factor = height / 75
+
+    pixel_value = 0
+    for i in range(int(height / pixelate_factor)):
+        pixels_as_chars.append(list())
+
+        for j in range(int(width / pixelate_factor)):
+            # we get the first index because the pixel object is a tuple of RGB values
+            pixel_value = pixels[j * pixelate_factor, i * pixelate_factor][0]
+            pixels_as_chars[i].append(char_convert[round(pixel_value / brightness_index)])
+            
+    output = ""
+    for i in range(len(pixels_as_chars)):
+        for j in range(len(pixels_as_chars[i])):
+            output += str(pixels_as_chars[i][j])
+            output += " "
+        output += "\n"
+
+    # the output often breaks the discord message limit, so we instead upload it as a txt file
+    open(f"image_processing/{file.name[:-4]}.txt", "w").write(output)
+    await ctx.send(file = discord.File(f"image_processing/{file.name[:-4]}.txt"))
+
+    exec(f"rm image_processing/{file.name[:-4]}.txt")
+    exec(f"rm image_processing/{file.name}")

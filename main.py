@@ -1,7 +1,7 @@
+import builtins
 import discord
 from discord.ext.commands import Bot
 import sqlite3
-import builtins
 
 bot = Bot(command_prefix = "/", intents = discord.Intents().all())
 connection = sqlite3.connect("./assets/omnibus.db")
